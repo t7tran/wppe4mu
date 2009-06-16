@@ -56,7 +56,7 @@ require_once(ABSPATH.'wp-admin/admin.php');
 
 $_POST['dir'] = urldecode($_POST['dir']);
 
-if( file_exists($root . $_POST['dir']) ) {
+if( stripos($_POST['dir'], get_option('upload_path')) !== false && stripos($_POST['dir'], '..') === false && file_exists($root . $_POST['dir']) ) { // added security measure
 	if (function_exists('scandir')) {
 		$files = scandir($root . $_POST['dir']);
 	} else {
