@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Wordpress Download Monitor
+Plugin Name: Wordpress Download Monitor <span style="color:#A00">[modified]</span>
 Plugin URI: http://wordpress.org/extend/plugins/download-monitor/
 Description: Manage downloads on your site, view and show hits, and output in posts. If you are upgrading Download Monitor it is a good idea to <strong>back-up your database</strong> just in case.
 Version: 3.1.1
@@ -47,6 +47,8 @@ $wp_dlm_db_formats = $table_prefix."DLM_FORMATS";
 $wp_dlm_db_stats = $table_prefix."DLM_STATS";
 $wp_dlm_db_log = $table_prefix."DLM_LOG";
 $wp_dlm_db_meta = $table_prefix."DLM_META";
+
+$wp_dlm_upload_path = ABSPATH . get_option('upload_path') . '/'; // IGAUMWP
 
 $def_format = get_option('wp_dlm_default_format');
 $dlm_url = get_option('wp_dlm_url');
@@ -111,7 +113,7 @@ add_action('admin_menu', 'wp_dlm_menu');
 // ADMIN HEADER
 ################################################################################
 function wp_dlm_head() {
-	global $wp_db_version, $wp_dlm_root;
+	global $wp_db_version, $wp_dlm_root, $wp_dlm_upload_path;
 	// Provide css based on wordpress version.
 	if ($wp_db_version < 9872) {
 		// 2.5 + 2.6 with new interface
@@ -141,10 +143,10 @@ function wp_dlm_head() {
 		  $(function() {
 		  
 		    $('#file_browser').hide().fileTree({
-		      root: '<?php echo ABSPATH; ?>',
+		      root: '<?php echo $wp_dlm_upload_path; ?>',
 		      script: '<?php echo $wp_dlm_root; ?>js/jqueryFileTree/connectors/jqueryFileTree.php',
 		    }, function(file) {
-		        var path = file.replace('<?php echo ABSPATH; ?>', '<?php bloginfo('wpurl'); ?>/');
+		        var path = file.replace('<?php echo $wp_dlm_upload_path; ?>', '/files/');
 		        $('#filename, #dlfilename').val(path);
 		        $('#file_browser').slideToggle();
 		    });
@@ -1007,9 +1009,6 @@ function wp_dlm_admin()
 							if (empty($errors)) {
 									if (!empty($_FILES['upload']['tmp_name'])) {
 																	
-											$time = current_time('mysql');
-											$overrides = array('test_form'=>false);
-											
 											// Remove old file
 											if ($removefile){		
 												$d = $wpdb->get_row( $wpdb->prepare("SELECT * FROM $wp_dlm_db WHERE id=%s;",$_GET['id'] ) );
@@ -1025,13 +1024,13 @@ function wp_dlm_admin()
 												}										
 											}
 	
-											$file = wp_handle_upload($_FILES['upload'], $overrides, $time);
-	
-											if ( !isset($file['error']) ) {
-												$info = $file['url'];
-												$filename = $file['url'];	
-											} 
-											else $errors = '<div class="error">'.$file['error'].'</div>';				
+											$fileid = media_handle_upload('upload', 0);
+											if ( !is_wp_error($fileid) ) {
+												$filename = wp_get_attachment_url($fileid);
+												$info = $filename;
+												$fileid = false;
+											}
+											else $errors = '<div class="error">'.$fileid->get_error_message().'</div>';
 	
 											// update download & file
 											$query_update_file = sprintf("UPDATE %s SET title='%s', dlversion='%s', hits='%s', filename='%s', postDate='%s', user='%s',members='%s',category_id='%s', mirrors='%s', file_description='%s' WHERE id=%s;",
@@ -2016,17 +2015,13 @@ function dlm_addnew() {
 		//attempt to upload file
 		if ( empty($errors ) ) {
 															
-					$time = current_time('mysql');
-					$overrides = array('test_form'=>false);
-
-					$file = wp_handle_upload($_FILES['upload'], $overrides, $time);
-
-					if ( !isset($file['error']) ) {
-						$full_path = $file['url'];
-						$info = $file['url'];
-						$filename = $file['url'];
-					} 
-					else $errors = '<div class="error">'.$file['error'].'</div>';												
+			$fileid = media_handle_upload('upload', 0);
+			if ( !is_wp_error($fileid) ) {
+				$filename = wp_get_attachment_url($fileid);
+				$info = $filename;
+				$fileid = false;
+			}
+			else $errors = '<div class="error">'.$fileid->get_error_message().'</div>';
 					
 		}										
 		//save to db

@@ -104,10 +104,10 @@ load_plugin_textdomain('wp-download_monitor', '/');
 		  			
 		  			
 		    $('#file_browser').hide().fileTree({
-		      root: '<?php echo ABSPATH; ?>',
+		      root: '<?php echo wp_dlm_upload_path; ?>',
 		      script: '<?php echo $wp_dlm_root; ?>js/jqueryFileTree/connectors/jqueryFileTree.php',
 		    }, function(file) {
-		        var path = file.replace('<?php echo ABSPATH; ?>', '<?php bloginfo('wpurl'); ?>/');
+		        var path = file.replace('<?php echo wp_dlm_upload_path; ?>', '/files/');
 		        $('#filename, #dlfilename').val(path);
 		        $('#file_browser').slideToggle();
 		    });
@@ -192,17 +192,13 @@ load_plugin_textdomain('wp-download_monitor', '/');
 												
 					if (empty( $filename ) && $_FILES['upload'] && empty($errors)) {
 						//attempt to upload file
-						$time = current_time('mysql');
-						$overrides = array('test_form'=>false);
-	
-						$file = wp_handle_upload($_FILES['upload'], $overrides, $time);
-	
-						if ( !isset($file['error']) ) {
-							$full_path = $file['url'];
-							$info = $file['url'];
-							$filename = $file['url'];
-						} 
-						else $errors = '<div class="error">'.$file['error'].'</div>';	
+						$fileid = media_handle_upload('upload', 0);
+						if ( !is_wp_error($fileid) ) {
+							$filename = wp_get_attachment_url($fileid);
+							$info = $filename;
+							$fileid = false;
+						}
+						else $errors = '<div class="error">'.$fileid->get_error_message().'</div>';
 															
 					} elseif (empty($errors)) {
 						if ( empty( $filename ) ) $errors=__('<div id="media-upload-error">No file selected</div>',"wp-download_monitor");
