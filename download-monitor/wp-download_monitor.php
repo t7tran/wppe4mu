@@ -3,7 +3,7 @@
 Plugin Name: Wordpress Download Monitor <span style="color:#A00">[modified]</span>
 Plugin URI: http://wordpress.org/extend/plugins/download-monitor/
 Description: Manage downloads on your site, view and show hits, and output in posts. If you are upgrading Download Monitor it is a good idea to <strong>back-up your database</strong> just in case.
-Version: 3.1.1
+Version: 3.1.3
 Author: Mike Jolley
 Author URI: http://blue-anvil.com
 */
@@ -1008,7 +1008,7 @@ function wp_dlm_admin()
 								
 							if (empty($errors)) {
 									if (!empty($_FILES['upload']['tmp_name'])) {
-																	
+											
 											// Remove old file
 											if ($removefile){		
 												$d = $wpdb->get_row( $wpdb->prepare("SELECT * FROM $wp_dlm_db WHERE id=%s;",$_GET['id'] ) );
@@ -2018,6 +2018,7 @@ function dlm_addnew() {
 			$fileid = media_handle_upload('upload', 0);
 			if ( !is_wp_error($fileid) ) {
 				$filename = wp_get_attachment_url($fileid);
+				$full_path = $filename;
 				$info = $filename;
 				$fileid = false;
 			}
@@ -2561,7 +2562,7 @@ function wp_dlm_rewrite($rewrite) {
 	$rule = ('
 Options +FollowSymLinks
 RewriteEngine on
-RewriteRule ^'.$offset.$dlm_url.'([^/]+)$ '.WP_PLUGIN_DIR.'/download-monitor/download.php?id=$1 [L]
+RewriteRule ^'.$offset.$dlm_url.'([^/]+)$ '.WP_PLUGIN_URL.'/download-monitor/download.php?id=$1 [L]
 ');
 	return $rule.$rewrite;	
 }
@@ -3225,17 +3226,14 @@ if ($wp_db_version > 6124) {
 	}
 	
 	// Different handling if supported (2.7 and 2.8)
-	if (function_exists('wp_add_dashboard_widget')) {
-	
+	//if (function_exists('wp_add_dashboard_widget')) {
+	if ($wp_db_version > 8644) {
+		
 		function dlm_download_stats_widget_setup() {
 			wp_add_dashboard_widget( 'dlm_download_stats_widget', __( 'Download Stats' ), 'dlm_download_stats_widget' );
-		}
-		add_action('wp_dashboard_setup', 'dlm_download_stats_widget_setup');
-		
-		function dlm_top_downloads_widget_setup() {
 			wp_add_dashboard_widget( 'dlm_download_top_widget', __( 'Top 5 Downloads' ), 'dlm_download_top_widget' );
 		}
-		add_action('wp_dashboard_setup', 'dlm_top_downloads_widget_setup');	
+		add_action('wp_dashboard_setup', 'dlm_download_stats_widget_setup');
 		
 	} else {
 	

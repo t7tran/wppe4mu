@@ -104,10 +104,10 @@ load_plugin_textdomain('wp-download_monitor', '/');
 		  			
 		  			
 		    $('#file_browser').hide().fileTree({
-		      root: '<?php echo wp_dlm_upload_path; ?>',
+		      root: '<?php echo $wp_dlm_upload_path; ?>',
 		      script: '<?php echo $wp_dlm_root; ?>js/jqueryFileTree/connectors/jqueryFileTree.php',
 		    }, function(file) {
-		        var path = file.replace('<?php echo wp_dlm_upload_path; ?>', '/files/');
+		        var path = file.replace('<?php echo $wp_dlm_upload_path; ?>', '/files/');
 		        $('#filename, #dlfilename').val(path);
 		        $('#file_browser').slideToggle();
 		    });
@@ -195,6 +195,7 @@ load_plugin_textdomain('wp-download_monitor', '/');
 						$fileid = media_handle_upload('upload', 0);
 						if ( !is_wp_error($fileid) ) {
 							$filename = wp_get_attachment_url($fileid);
+							$full_path = $filename;
 							$info = $filename;
 							$fileid = false;
 						}
